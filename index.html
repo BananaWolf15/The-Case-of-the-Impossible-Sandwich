@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>The Case of the Impossible Sandwich</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #222;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #222;
+    }
+
+    .book-container {
+      width: 900px;
+      max-width: 95vw;
+      height: 600px;
+      max-height: 90vh;
+      background: #c9b79c;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      border-radius: 8px;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .page {
+      width: 50%;
+      padding: 30px 40px;
+      background: #fdf7e9;
+      border-right: 1px solid #d9c9aa;
+      overflow-y: auto;
+      position: relative;
+      transition: transform 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    .page.right {
+      border-right: none;
+      border-left: 1px solid #d9c9aa;
+    }
+
+    .page h1, .page h2, .page h3 {
+      margin-bottom: 12px;
+    }
+
+    .page h1 {
+      font-size: 1.6rem;
+    }
+
+    .page h2 {
+      font-size: 1.3rem;
+    }
+
+    .page p {
+      margin-bottom: 10px;
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
+    .page::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .page::-webkit-scrollbar-thumb {
+      background: #c9b79c;
+      border-radius: 3px;
+    }
+
+    .controls {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 10;
+    }
+
+    .controls button {
+      padding: 6px 14px;
+      border-radius: 4px;
+      border: none;
+      background: #4b3b2a;
+      color: #fdf7e9;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+
+    .controls button:disabled {
+      background: #8b7a64;
+      cursor: default;
+      transform: none;
+    }
+
+    .controls button:hover:not(:disabled) {
+      background: #3a2c1f;
+      transform: translateY(-1px);
+    }
+
+    .page-number {
+      position: absolute;
+      bottom: 10px;
+      right: 15px;
+      font-size: 0.8rem;
+      color: #8b7a64;
+    }
+
+    .page-left-shadow {
+      box-shadow: inset -10px 0 20px rgba(0,0,0,0.15);
+    }
+
+    .page-right-shadow {
+      box-shadow: inset 10px 0 20px rgba(0,0,0,0.15);
+    }
+
+    .title-page {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .title-page h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .title-page h2 {
+      font-size: 1.1rem;
+      margin-bottom: 25px;
+      font-weight: 400;
+    }
+
+    .title-page p {
+      max-width: 80%;
+    }
+
+    @media (max-width: 800px) {
+      .book-container {
+        flex-direction: column;
+        width: 95vw;
+        height: 90vh;
+      }
+      .page {
+        width: 100%;
+        height: 50%;
+        border-right: none;
+        border-bottom: 1px solid #d9c9aa;
+      }
+      .page.right {
+        border-left: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="book-container">
+    <div id="leftPage" class="page page-left-shadow"></div>
+    <div id="rightPage" class="page page-right-shadow"></div>
+
+    <div class="controls">
+      <button id="prevBtn">⟵ Previous</button>
+      <button id="nextBtn">Next ⟶</button>
+    </div>
+  </div>
+
+  <script>
+    // Each entry is one "page" of content (left or right)
+    const pages = [
+      // 0 – Title
+      `
+      <div class="title-page">
+        <h1>The Case of the Impossible Sandwich</h1>
+        <h2>A Humorous Mystery for Kids, Teens, and Adults</h2>
+        <p>Written with love, chaos, and carbs.</p>
+      </div>
+      `,
+      // 1 – Intro note
+      `
+      <h2>Welcome to Mapleberry</h2>
+      <p>This is a town where nothing truly dangerous ever happens—unless you count competitive fitted-sheet folding.</p>
+      <p>But today, something impossible is on the loose: a legendary sandwich that refuses to be eaten.</p>
+      <p>Turn the page to begin the mystery.</p>
+      `,
+      // 2 – Chapter 1 (part 1)
+      `
+      <h2>Chapter 1 — The Sandwich That Shouldn’t Have Been Able to Leave</h2>
+      <p>The town of Mapleberry was famous for exactly three things:</p>
+      <p>1. Its unusually polite squirrels<br>
+      2. A library so quiet it once won an award for “Most Silent Building”<br>
+      3. The annual Festival of Mildly Impressive Achievements</p>
+      <p>Every year, the townspeople gathered to celebrate accomplishments that were not quite great, but definitely not bad. Last year’s winners included “Most Consecutive Days Without Losing Keys” and “Fastest Time Folding a Fitted Sheet (Accidentally).”</p>
+      <p>But this year, everyone knew the star attraction would be <strong>The Sandwich</strong>.</p>
+      `,
+      // 3 – Chapter 1 (part 2)
+      `
+      <p>Chef Aurelia “The Whisk” Whittaker had spent six months crafting it. Rumors swirled around town: some said it contained seventeen layers; others whispered it glowed faintly in the dark; one kid claimed it could solve basic algebra if asked politely.</p>
+      <p>Whatever the truth, the sandwich sat backstage on a silver pedestal, covered by a velvet cloth, guarded by a single sign that read:</p>
+      <p><strong>DO NOT TOUCH. SERIOUSLY. DON’T.</strong></p>
+      <p>Maxine Maplethorpe, age thirteen, future world‑famous detective (in her own opinion), stood nearby with her notebook. She had been preparing for this moment all week. Not the sandwich unveiling—the inevitable crime she was certain would occur.</p>
+      <p>“Big events attract big trouble,” she muttered. “Or at least medium‑sized trouble. Possibly sandwich‑related trouble.”</p>
+      `,
+      // 4 – Chapter 1 (part 3)
+      `
+      <p>On her shoulder perched Professor Peabody, a green parrot with a monocle he absolutely did not need.</p>
+      <p>“Statistically,” he squawked, “ninety‑three percent of major historical disasters involved food.”</p>
+      <p>“That’s not true,” Max said.</p>
+      <p>“It <em>sounds</em> true,” Peabody replied.</p>
+      <p>Mayor Crumble burst onto the stage, sweating nervously and clutching a stack of cue cards. “Ladies and gentlemen, esteemed guests, and whoever keeps feeding the squirrels espresso—please stop—welcome to the Festival of Mildly Impressive Achievements!”</p>
+      <p>The crowd cheered with the exact level of enthusiasm one might expect for a festival celebrating mild impressiveness.</p>
+      `,
+      // 5 – Chapter 1 (part 4)
+      `
+      <p>“And now,” the mayor continued, “the moment you’ve all been waiting for… the unveiling of Chef Whittaker’s legendary—”</p>
+      <p>He whipped off the velvet cloth with a dramatic flourish.</p>
+      <p>The pedestal was empty.</p>
+      <p>The crowd gasped. Someone fainted. Someone else clapped, thinking this was part of the show. A squirrel in the front row dropped its tiny latte.</p>
+      <p>Mayor Crumble stared at the empty pedestal, then at the cloth, then at the pedestal again, as if hoping the sandwich might reappear out of embarrassment.</p>
+      <p>“It’s… it’s gone!” he wailed.</p>
+      `,
+      // 6 – Chapter 1 end
+      `
+      <p>Max snapped her notebook shut. “I knew it. A crime.”</p>
+      <p>Professor Peabody puffed up his feathers. “A mystery! A caper! A scandal! A—”</p>
+      <p>“Focus,” Max said. “We need to secure the scene.”</p>
+      <p>The mayor stumbled toward them. “Maxine! You’re good at… noticing things. Please, you must help us! The festival is ruined!”</p>
+      <p>Max examined the pedestal. No crumbs. No smudges. Just a single piece of paper taped neatly to the surface.</p>
+      <p>She peeled it off and read aloud: <strong>NO.</strong></p>
+      <p>“I don’t think the sandwich was stolen,” she said slowly. “I think the sandwich left on its own.”</p>
+      `,
+      // 7 – Chapter 2
+      `
+      <h2>Chapter 2 — The First Clue That Wasn’t Very Helpful</h2>
+      <p>Max crouched beside the pedestal, examining it with the intensity of someone defusing a bomb rather than investigating missing lunch.</p>
+      <p>Professor Peabody strutted around. “Observe! No crumbs. No residue. A clean getaway.”</p>
+      <p>Chef Whittaker admitted she had written the note “NO” to stop herself from eating the sandwich early.</p>
+      <p>Then came the real shock: she had used an experimental yeast. “Very energetic. Very lively. Very… mobile.”</p>
+      <p>“You’re telling me you baked a sandwich that can move?” Max asked.</p>
+      <p>“It was supposed to make the bread fluffier,” the chef said. “I may have overdone it.”</p>
+      `,
+      // 8 – Chapter 2 end + 3 start
+      `
+      <p>Outside, a lemonade stand lay toppled. The vendor swore a loaf‑like blur had zoomed past. A trail of sesame seeds led away.</p>
+      <p>“We’ve got our first real lead,” Max said. “Let’s go catch a sandwich.”</p>
+      <h2>Chapter 3 — The Raccoon With a Shady Past</h2>
+      <p>The trail led into the park, where a gang of raccoons—led by Ricky Raccoon, local troublemaker—looked extremely guilty.</p>
+      <p>Through nods, gestures, and a dirt drawing, Ricky confirmed: they had chased the sandwich… until it chased them back.</p>
+      <p><strong>Clue:</strong> The sandwich might be aggressive. Or scared. Or both.</p>
+      `,
+      // 9 – Chapter 4
+      `
+      <h2>Chapter 4 — The Mime Who Wouldn’t Break Character</h2>
+      <p>The sesame‑seed trail led to a mime onstage, locked in invisible combat with an imaginary elephant.</p>
+      <p>Max tried to question him. He refused to speak, but mimed a sandwich sprinting, cartwheeling, and being chased by a caped magician.</p>
+      <p><strong>Clue:</strong> The sandwich is agile. Possibly acrobatic. And it has terrified at least one magician.</p>
+      `,
+      // 10 – Chapter 5
+      `
+      <h2>Chapter 5 — The Magician With Too Many Secrets</h2>
+      <p>In a purple, sparkly tent, The Amazing Magnifico confessed: the sandwich had burst through his act, glared at him (or felt like it did), knocked over his wands, tripped over his rabbit, and zoomed away.</p>
+      <p>Outside the tent, the trail pointed toward the library.</p>
+      <p>“A rogue sandwich in the quietest place in town,” Peabody said. “This can only end badly.”</p>
+      `,
+      // 11 – Chapter 6
+      `
+      <h2>Chapter 6 — The Library of Utter Silence</h2>
+      <p>The Mapleberry Public Library was so quiet even the dust motes behaved.</p>
+      <p>Mrs. Pennington, the terrifyingly calm librarian, confirmed she had heard a terrible noise: a squelch.</p>
+      <p>In the nonfiction section, Max found a book on yeast open to a page titled “When Bread Goes Too Far.”</p>
+      <p><strong>Clue:</strong> The sandwich was reading. It was learning.</p>
+      `,
+      // 12 – Chapter 7
+      `
+      <h2>Chapter 7 — The Restricted Archives and the Great Escape</h2>
+      <p>The sandwich had made the ultimate mistake: entering the restricted archives.</p>
+      <p>Max chased it through shelves and falling dictionaries, nearly grabbing it before it launched itself out the doors.</p>
+      <p>Outside, it raced down the street, leaving a trail of seeds and a dropped book: <em>Advanced Strategies for Escape Artists</em>.</p>
+      <p><strong>Clue:</strong> It was studying how to escape.</p>
+      `,
+      // 13 – Chapter 8
+      `
+      <h2>Chapter 8 — The Librarian Who Never Left the Building</h2>
+      <p>Ms. Agatha Quill, rumored never to have left the library since 1998, confirmed the sandwich had barreled through her archive room.</p>
+      <p>It had paused at a stack of overdue books, stared at them with judgment, then fled.</p>
+      <p><strong>Clue:</strong> The sandwich might have strong opinions about overdue items.</p>
+      `,
+      // 14 – Chapter 9
+      `
+      <h2>Chapter 9 — The Town Square Panic</h2>
+      <p>The town square was chaos: toppled stands, stolen nachos, and a hot‑dog mascot fainted onto a pretzel cart.</p>
+      <p>At the fountain, Max found soggy lettuce and wet sesame seeds leading away.</p>
+      <p><strong>Clue:</strong> The sandwich had taken a bath. It was trying to clean itself.</p>
+      <p>The trail led toward the old clock tower.</p>
+      `,
+      // 15 – Chapter 10
+      `
+      <h2>Chapter 10 — The Clock Tower Clue</h2>
+      <p>Inside the crooked clock tower, Max found a note on the stairs: <strong>STOP FOLLOWING ME</strong>.</p>
+      <p><strong>Clue:</strong> The sandwich knew it was being chased.</p>
+      <p>At the top, a lone pickle slice lay on the floor. Out the window, Max saw the sandwich sprinting across rooftops.</p>
+      <p>“It’s parkouring,” she said. “We’re dealing with an athletic, intelligent, emotionally complex sandwich.”</p>
+      `,
+      // 16 – Chapter 11
+      `
+      <h2>Chapter 11 — Rooftop Chase</h2>
+      <p>Max chased the sandwich across the roofs, leaping from building to building while Peabody screamed about broken necks.</p>
+      <p>The sandwich paused at the edge of a roof and looked back at her—full of determination, fear, and purpose—before jumping again.</p>
+      <p>Max followed.</p>
+      `,
+      // 17 – Chapter 12
+      `
+      <h2>Chapter 12 — The Sandwich’s Secret Hideout</h2>
+      <p>The chase ended in an alley behind the old bakery. A crumb‑lined tunnel led to a hidden room beneath it.</p>
+      <p>There, on a crate like a throne, sat the sandwich. It wasn’t running anymore. It was waiting.</p>
+      <p>It nudged a notebook toward Max. Inside were diagrams, maps, and one sentence in Chef Whittaker’s handwriting:</p>
+      <p><strong>THE SANDWICH MUST NEVER BE EATEN.</strong></p>
+      <p>The mystery had just gotten bigger.</p>
+      `,
+      // 18 – Chapter 13
+      `
+      <h2>Chapter 13 — The Chef’s Confession</h2>
+      <p>Chef Whittaker admitted the truth: the sandwich was an experiment in self‑preserving food.</p>
+      <p>“I wanted something that stayed fresh, that protected itself,” she said. “I didn’t mean for it to run away… or learn… or develop opinions.”</p>
+      <p>If it kept learning, she warned, it wouldn’t just run. It would fight back.</p>
+      `,
+      // 19 – Chapter 14
+      `
+      <h2>Chapter 14 — The Sandwich Strikes</h2>
+      <p>Back at the bakery hideout, the sandwich was gone. On the floor, scratched into the boards, was a message:</p>
+      <p><strong>NO MORE RUNNING</strong></p>
+      <p>“It’s done hiding,” Max said. “The sandwich is coming to us.”</p>
+      `,
+      // 20 – Chapter 15
+      `
+      <h2>Chapter 15 — The Festival Under Siege</h2>
+      <p>The festival tried to pretend everything was normal.</p>
+      <p>Then the sandwich arrived.</p>
+      <p>It blasted through the crowd, scattering snacks and jugglers. Max ran toward it. “You don’t have to do this!”</p>
+      <p>The sandwich trembled… then charged.</p>
+      `,
+      // 21 – Chapter 16
+      `
+      <h2>Chapter 16 — The Great Sandwich Showdown</h2>
+      <p>Max dodged as the sandwich slammed into a lemonade stand.</p>
+      <p>Holding up the notebook, she shouted, “You’re not a meal. You’re a miracle.”</p>
+      <p>The sandwich slowed.</p>
+      <p>“You don’t have to fight. You don’t have to run. You just have to trust us.”</p>
+      <p>For the first time, when she reached out, the sandwich didn’t pull away.</p>
+      `,
+      // 22 – Chapter 17
+      `
+      <h2>Chapter 17 — The Decision</h2>
+      <p>Chef Whittaker warned the sandwich was unstable, trembling like it might explode.</p>
+      <p>Max held it gently. “It’s not dangerous. It’s scared.”</p>
+      <p>She spoke softly until the trembling slowed and stopped.</p>
+      <p>“How did you do that?” the chef asked.</p>
+      <p>“I asked nicely,” Max said.</p>
+      `,
+      // 23 – Chapter 18
+      `
+      <h2>Chapter 18 — A New Beginning</h2>
+      <p>The mayor asked the big question: “What do we do with it?”</p>
+      <p>Max knew the answer. “We give it a safe place. With rules.”</p>
+      <p>She carried the sandwich to the one person who could keep it safe and quiet: Mrs. Pennington.</p>
+      `,
+      // 24 – Chapter 19
+      `
+      <h2>Chapter 19 — The Librarian’s Offer</h2>
+      <p>Mrs. Pennington studied the sandwich. The sandwich studied her.</p>
+      <p>“Rule one: No running,” she said. The sandwich wiggled in agreement.</p>
+      <p>“Rule two: No loud noises.” It stayed still.</p>
+      <p>“Rule three: No eating in the library.” Peabody muttered about irony.</p>
+      <p>“Very well,” Mrs. Pennington said. “I will take responsibility for it.”</p>
+      <p>The sandwich nudged Max’s hand—a quiet thank‑you.</p>
+      `,
+      // 25 – Chapter 20
+      `
+      <h2>Chapter 20 — A Town Returns to Normal… Mostly</h2>
+      <p>The festival resumed. The marching band remained impressively off‑key.</p>
+      <p>Chef Whittaker told Max, “You saved the town.”</p>
+      <p>The mayor presented her with a trophy: <strong>Most Impressive Mild Achievement</strong>.</p>
+      <p>“We should’ve gotten a parade,” Peabody said.</p>
+      `,
+      // 26 – Chapter 21 / Epilogue
+      `
+      <h2>Chapter 21 — Epilogue: The Sandwich’s New Life</h2>
+      <p>The library became slightly less silent—softly squelchy, but peaceful.</p>
+      <p>The sandwich spent its days reading, helping with shelves, and startling the occasional unsuspecting patron.</p>
+      <p>Max visited often, working on her detective notebook while the sandwich turned pages beside her.</p>
+      <p>One day, she found a note on the table:</p>
+      <p><strong>THANK YOU</strong></p>
+      <p>“You’re welcome,” she said.</p>
+      <p>A new mystery would come someday. But for now, she was content.</p>
+      <p>And somewhere in the library, a sandwich turned a page.</p>
+      `
+    ];
+
+    let currentSpread = 0; // each spread = two pages: left = 2*spread, right = 2*spread+1
+
+    const leftPageEl = document.getElementById('leftPage');
+    const rightPageEl = document.getElementById('rightPage');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    function renderSpread() {
+      const leftIndex = currentSpread * 2;
+      const rightIndex = leftIndex + 1;
+
+      leftPageEl.innerHTML = (pages[leftIndex] || "") + `<div class="page-number">${leftIndex + 1}</div>`;
+      rightPageEl.innerHTML = (pages[rightIndex] || "") + `<div class="page-number">${rightIndex + 1}</div>`;
+
+      prevBtn.disabled = currentSpread === 0;
+      nextBtn.disabled = rightIndex >= pages.length - 1;
+    }
+
+    prevBtn.addEventListener('click', () => {
+      if (currentSpread > 0) {
+        currentSpread--;
+        renderSpread();
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if ((currentSpread + 1) * 2 < pages.length) {
+        currentSpread++;
+        renderSpread();
+      }
+    });
+
+    renderSpread();
+  </script>
+</body>
+</html>
